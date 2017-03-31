@@ -380,21 +380,13 @@ static int l2tp_session_add_to_tunnel(struct l2tp_tunnel *tunnel,
 	struct hlist_head *g_head;
 	struct hlist_head *head;
 	struct l2tp_net *pn;
-	int err;
 
 	head = l2tp_session_id_hash(tunnel, session->session_id);
 
 	write_lock_bh(&tunnel->hlist_lock);
-	if (!tunnel->acpt_newsess) {
-		err = -ENODEV;
-		goto err_tlock;
-	}
-
 	hlist_for_each_entry(session_walk, head, hlist)
-		if (session_walk->session_id == session->session_id) {
-			err = -EEXIST;
-			goto err_tlock;
-		}
+		if (session_walk->session_id == session->session_id)
+			goto exist;
 
 	if (tunnel->version == L2TP_HDR_VER_3) {
 		pn = l2tp_pernet(tunnel->l2tp_net);
@@ -402,21 +394,12 @@ static int l2tp_session_add_to_tunnel(struct l2tp_tunnel *tunnel,
 						session->session_id);
 
 		spin_lock_bh(&pn->l2tp_session_hlist_lock);
-
 		hlist_for_each_entry(session_walk, g_head, global_hlist)
-			if (session_walk->session_id == session->session_id) {
-				err = -EEXIST;
-				goto err_tlock_pnlock;
-			}
+			if (session_walk->session_id == session->session_id)
+				goto exist_glob;
 
-		l2tp_tunnel_inc_refcount(tunnel);
-		sock_hold(tunnel->sock);
 		hlist_add_head_rcu(&session->global_hlist, g_head);
-
 		spin_unlock_bh(&pn->l2tp_session_hlist_lock);
-	} else {
-		l2tp_tunnel_inc_refcount(tunnel);
-		sock_hold(tunnel->sock);
 	}
 
 	hlist_add_head(&session->hlist, head);
@@ -424,12 +407,12 @@ static int l2tp_session_add_to_tunnel(struct l2tp_tunnel *tunnel,
 
 	return 0;
 
-err_tlock_pnlock:
+exist_glob:
 	spin_unlock_bh(&pn->l2tp_session_hlist_lock);
-err_tlock:
+exist:
 	write_unlock_bh(&tunnel->hlist_lock);
 
-	return err;
+	return -EEXIST;
 }
 
 /* Lookup a tunnel by id
@@ -1909,8 +1892,8 @@ struct l2tp_session *l2tp_session_create(int priv_size, struct l2tp_tunnel *tunn
 
 		l2tp_session_set_header_len(session, tunnel->version);
 
-		l2tp_session_inc_refcount(session);
-
+<<<<<<< HEAD
+=======
 		err = l2tp_session_add_to_tunnel(tunnel, session);
 		if (err) {
 			kfree(session);
@@ -1918,6 +1901,22 @@ struct l2tp_session *l2tp_session_create(int priv_size, struct l2tp_tunnel *tunn
 			return ERR_PTR(err);
 		}
 
+		/* Bump the reference count. The session context is deleted
+		 * only when this drops to zero.
+		 */
+>>>>>>> 55848189d8f5... BACKPORT: l2tp: fix duplicate session creation
+		l2tp_session_inc_refcount(session);
+
+<<<<<<< HEAD
+		err = l2tp_session_add_to_tunnel(tunnel, session);
+		if (err) {
+			kfree(session);
+
+			return ERR_PTR(err);
+		}
+
+=======
+>>>>>>> 55848189d8f5... BACKPORT: l2tp: fix duplicate session creation
 		/* Ignore management session in session count value */
 		if (session->session_id != 0)
 			atomic_inc(&l2tp_session_count);
@@ -2005,4 +2004,3 @@ MODULE_AUTHOR("James Chapman <jchapman@katalix.com>");
 MODULE_DESCRIPTION("L2TP core");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(L2TP_DRV_VERSION);
-
