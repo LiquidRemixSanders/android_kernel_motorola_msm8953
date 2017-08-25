@@ -1892,8 +1892,8 @@ struct l2tp_session *l2tp_session_create(int priv_size, struct l2tp_tunnel *tunn
 
 		l2tp_session_set_header_len(session, tunnel->version);
 
-<<<<<<< HEAD
-=======
+                l2tp_session_inc_refcount(session);
+
 		err = l2tp_session_add_to_tunnel(tunnel, session);
 		if (err) {
 			kfree(session);
@@ -1901,22 +1901,8 @@ struct l2tp_session *l2tp_session_create(int priv_size, struct l2tp_tunnel *tunn
 			return ERR_PTR(err);
 		}
 
-		/* Bump the reference count. The session context is deleted
-		 * only when this drops to zero.
-		 */
->>>>>>> 55848189d8f5... BACKPORT: l2tp: fix duplicate session creation
-		l2tp_session_inc_refcount(session);
+		l2tp_tunnel_inc_refcount(tunnel);
 
-<<<<<<< HEAD
-		err = l2tp_session_add_to_tunnel(tunnel, session);
-		if (err) {
-			kfree(session);
-
-			return ERR_PTR(err);
-		}
-
-=======
->>>>>>> 55848189d8f5... BACKPORT: l2tp: fix duplicate session creation
 		/* Ignore management session in session count value */
 		if (session->session_id != 0)
 			atomic_inc(&l2tp_session_count);
