@@ -470,9 +470,12 @@ __mmap_switched:
 	adr_l	sp, initial_sp, x4
 	mov	x4, sp
 	and	x4, x4, #~(THREAD_SIZE - 1)
+#ifdef CONFIG_THREAD_INFO_IN_TASK
+	adr_l	x5, init_task
+	msr	sp_el0, x5                      // Save thread_info
+#else
 	msr	sp_el0, x4			// Save thread_info
 #endif
-
 	str_l	x21, __fdt_pointer, x5		// Save FDT pointer
 	str_l	x24, memstart_addr, x6		// Save PHYS_OFFSET
 	mov	x29, #0
