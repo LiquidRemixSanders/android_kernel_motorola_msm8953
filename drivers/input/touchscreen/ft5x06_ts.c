@@ -3358,19 +3358,17 @@ static ssize_t ft5x06_proc_write(struct file *filp, const char __user *buff,
 		}
 		break;
 	case PROC_HW_RESET:
-#ifdef CONFIG_TOUCHSCREEN_FT5336
 		dev_err(&data->client->dev, "tp reset\n");
 		retval = gpio_direction_output(data->pdata->reset_gpio, 0);
 		if (0 == retval) {
 			gpio_set_value_cansleep(data->pdata->reset_gpio, 0);
 			msleep(data->pdata->hard_rst_dly);
 			gpio_set_value_cansleep(data->pdata->reset_gpio, 1);
+			msleep(100);
 		} else {
 			dev_err(&data->client->dev,
 				"set direction for reset gpio failed\n");
 		}
-		msleep(100);
-#endif
 		break;
 	default:
 		dev_err(&data->client->dev,
